@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zch.manager.dao.IndexDao">
+	<select id="getAdvertiseMsg1" resultType="Advertise">
+		select a_id aid,a_deptname adeptName,a_jobname ajobName,a_salary
+		asalary, a_number anumber
+		from t_advertise
+		<!-- where a_id &lt; 15; -->
+	</select>
+	<!-- 计算招聘信息总记录数 -->
+	<select id="getTotalCountAdvertiseMsg" resultType="int">
+		select count(1) from t_advertise
+	</select>
+	<select id="getAdvertisetMsgList" parameterType="int"
+		resultType="Advertise">
+		select a_id aid,a_deptname adeptName,a_jobname ajobName,a_salary asalary,
+		a_number anumber
+		from t_advertise limit #{begin},#{pagesize}
+	</select>
+</mapper>

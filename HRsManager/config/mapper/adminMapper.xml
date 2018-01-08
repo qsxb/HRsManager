@@ -1,0 +1,602 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zch.manager.dao.AdminDao">
+	<!-- 关于部门信息的查询,主要是添加职位时需要选择哪个部门 -->
+	<select id="getDeptMsg" resultType="Dept">
+		SELECT d.d_id did,d.d_name
+		dname,d.d_createtime dcreatetime
+		FROM t_dept d
+	</select>
+	<!-- 计算部门信息的总记录数 -->
+	<select id="getTotalCountDeptMsg" resultType="int">
+		SELECT count(1)
+		FROM t_dept;
+	</select>
+	<!-- 得到每页显示的部门信息的集合 部门信息分页查询 -->
+	<select id="getDeptMsgList" parameterType="int" resultMap="getDeptMsgMap">
+		<!-- SELECT d.d_id ,d.d_name ,d.d_createtime,j.j_name FROM (SELECT *FROM 
+			t_dept LIMIT #{begin},#{pagesize}) d LEFT JOIN t_job j ON d.d_id=j.jd_id -->
+		<!-- select d.d_id ,d.d_name ,d.d_createtime,j.j_id,j.j_name,e.e_name from 
+			((select *from t_dept limit #{begin},#{pagesize})d left join t_job j on d.d_id=j.jd_id) 
+			left join t_employee e on j.je_id=e.e_id -->
+		select d.d_id ,d.d_name ,d.d_createtime,j.j_id,j.j_name,e.e_name
+		from
+		((select *from t_dept limit #{begin},#{pagesize})d left join t_job j
+		on d.d_id=j.jd_id)
+		left join t_employee e on e.ej_id=j.j_id
+	</select>
+	<resultMap type="Dept" id="getDeptMsgMap">
+		<id column="d_id" property="did" />
+		<result column="d_name" property="dname" />
+		<result column="d_createtime" property="dcreatetime" />
+		<collection property="job" ofType="Job">
+			<id column="j_id" property="jid" />
+			<result column="j_name" property="jname" />
+			<collection property="employee" ofType="Employee">
+				<id column="e_id" property="eid" />
+				<result column="e_name" property="ename" />
+			</collection>
+		</collection>
+	</resultMap>
+	<!-- 计算招聘信息的总记录数 -->
+	<select id="getTotalCountAdvertisetMsg" resultType="int">
+		select
+		count(1) from t_advertise
+	</select>
+	<!-- 得到每页显示的招聘信息的集合 招聘信息分页查询 -->
+	<select id="getDeptAdvertiseList" parameterType="int"
+		resultMap="getDeptAdvertiseListMap">
+		SELECT a.a_id ,a.a_deptname
+		,a.a_jobname,a.a_salary,a.a_number
+		FROM t_advertise a LIMIT
+		#{begin},#{pagesize}
+	</select>
+	<resultMap type="Advertise" id="getDeptAdvertiseListMap">
+		<id column="a_id" property="aid" />
+		<result column="a_deptname" property="adeptName" />
+		<result column="a_jobname" property="ajobName" />
+		<result column="a_salary" property="asalary" />
+		<result column="a_number" property="anumber" />
+		<result column="a_status" property="astatus" />
+		<!-- <collection property="resumeList" ofType="Resume"> <id column="r_id" 
+			property="rid"/> <result column="r_name" property="rname"/> </collection> -->
+	</resultMap>
+	<!-- 管理员做发布招聘信息时的获得部门信息操作 -->
+	<select id="getAllDeptMsg" resultMap="getAllDeptMsgMap">
+		select d.d_id ,d.d_name
+		,j.j_id,j.j_name
+		from t_dept d,t_job j
+		where d.d_id=j.jd_id
+	</select>
+	<resultMap type="Dept" id="getAllDeptMsgMap">
+		<id column="d_id" property="did" />
+		<result column="d_name" property="dname" />
+		<collection property="job" ofType="Job">
+			<id column="j_id" property="jid" />
+			<result column="j_name" property="jname" />
+		</collection>
+	</resultMap>
+	<!-- 二级联动通过部门id查职位信息 -->
+	<select id="getAllJobMsgByDeptId" resultType="Job"
+		parameterType="int">
+		select j_id jid,j_name jname
+		from t_job
+		where
+		jd_id=#{deptId}
+	</select>
+	<!-- 管理员发布的信息到招聘表中 -->
+	<insert id="saveAdvertiseMsg" parameterType="Advertise">
+		insert into
+		t_advertise(a_deptName,a_jobName,a_salary,a_number)
+		values(#{adeptName},#{ajobName},#{asalary},#{anumber});
+	</insert>
+	<!-- 根据部门名字得到部门id -->
+	<select id="findDeptMsgByDeptName" parameterType="String"
+		resultType="Dept">
+		select d_id did from t_dept where d_name=#{dname}
+	</select>
+	<!-- 根据id删除招聘信息操作 -->
+	<delete id="delAdvertiseById" parameterType="int">
+		delete from
+		t_advertise where a_id = #{aid}
+	</delete>
+	<!-- 根据id查招聘信息 -->
+	<select id="getAdvertiseMsgById" resultType="Advertise"
+		parameterType="int">
+		select a_id aid,a_deptname adeptName,a_jobname ajobName,
+		a_salary asalary,a_number anumber
+		from t_advertise
+		where a_id =#{aid}
+	</select>
+	<!-- 统计总简历数 -->
+	<select id="getTotalCountResumetMsg" resultType="int">
+		select count(1)
+		from t_resume
+	</select>
+	<!-- 得到简历数据的集合 -->
+	<select id="getResumeMsgList" resultType="Resume">
+		SELECT r_id rid
+		,r_name
+		rname,r_age rage,r_sex rsex,r_education reducation,r_tel rtel,ru_id
+		"user.uid",
+		r_email remail,r_polstatus rpolstatus,
+		r_readstatus
+		rreadStatus,r_facestatus rfaceStatus,
+		r_ideptname deptName,r_ijobname
+		jobName
+		from t_resume LIMIT #{begin},#{pagesize}
+	</select>
+	<!-- 更新简历的面试状态信息 -->
+	<update id="updateResumeFaceStatusByRid">
+		update t_resume set r_facestatus=#{rfaceStatus} where
+		r_id=#{rid}
+	</update>
+	<!-- 管理员添加新增加的部门到数据库中 -->
+	<insert id="saveDeptName">
+		insert into t_dept(d_name,d_createtime)
+		values(#{encodeDeptName},#{createTime})
+	</insert>
+	<!-- 通过部门名查看部门表得到部门信息 -->
+	<select id="isExistDeptByDeptName" resultType="Dept">
+		select d_id
+		did,d_name dname,d_createtime dcreatetime
+		from t_dept
+		where
+		d_name=#{dname}
+	</select>
+	<!-- 根据简历id得到简历信息,并动态取出保存进员工表里面 -->
+	<select id="getResumeMsg" parameterType="int" resultType="Resume">
+		select
+		r_name rname,r_sex rsex,r_age rage,r_education reducation,
+		r_tel
+		rtel,r_email remail,r_polstatus rpolstatus,ru_id
+		"user.uid",r_ideptname deptName,r_ijobname jobName,
+		r_salary rsalary
+		from t_resume
+		where r_id=#{rid}
+	</select>
+	<!-- 动态取出的简历信息保存进员工表中 -->
+	<insert id="getResumeMsgToEmployee" parameterType="String">
+		insert into
+		t_employee(e_name,e_pwd,e_job,e_email,e_age,e_sex,e_salary,e_education,e_tel,e_polstatus,e_status,ej_id,ed_id)
+		values(#{name},#{upwd},#{jobName},#{email},#{age},#{sex},#{rsalary},#{education},#{tel},#{polstatus},#{estatus},#{ej_id},#{ed_id})
+	</insert>
+	<!-- 取出管理员录取的用户信息(主要就是密码字段) -->
+	<select id="getUserMsg" resultType="User" parameterType="int">
+		select
+		u_pwd upwd from t_user where u_id=#{getuid}
+	</select>
+	<!-- 统计职位总记录数 -->
+	<select id="getTotalCountJobMsg" resultType="int">
+		select count(1) from
+		t_job
+	</select>
+	<!-- 职位信息的分页显示数据的集合 -->
+	<select id="getJobMsgList" parameterType="int" resultMap="getJobMsgListMap">
+		SELECT
+		j.j_id,j.j_name,j.j_createtime,e.e_name
+		FROM (SELECT *FROM t_job LIMIT
+		#{begin},#{pagesize}) j LEFT JOIN
+		t_employee e
+		ON e.ej_id=j.j_id
+	</select>
+	<resultMap type="Job" id="getJobMsgListMap">
+		<id column="j_id" property="jid" />
+		<result column="j_name" property="jname" />
+		<result column="j_createtime" property="jcreatetime" />
+		<collection property="employee" ofType="Employee">
+			<id column="e_id" property="eid" />
+			<result column="e_name" property="ename" />
+		</collection>
+	</resultMap>
+	<!-- 添加职位操作 -->
+	<insert id="saveJobMsg" parameterType="String">
+		insert into
+		t_job(j_name,j_createtime,jd_id)
+		values(#{encodeJobname},#{strDate},#{id})
+	</insert>
+	<!-- 根据职位id查找所有员工信息的名字 -->
+	<select id="findAllEmployeeMsgByJobId" resultType="Employee">
+		select
+		e.e_name ename from t_job j,t_employee e where e.ej_id=j.j_id and
+		j.j_id=#{jobId}
+	</select>
+	<!-- 根据部门id判断是否存在在职员工信息 -->
+	<select id="isExistEmployee" parameterType="int" resultType="Employee">
+		select e.e_name ename
+		from t_dept d,t_job j,t_employee e
+		WHERE
+		d.d_id=j.jd_id and j.j_id=e.ej_id and d.d_id=#{id}
+	</select>
+	<!-- 根据部门id进行部门的删除 -->
+	<delete id="delDeptMsg" parameterType="int">
+		delete from t_dept where
+		d_id=#{id}
+	</delete>
+	<!-- 根据职位id进行职位的删除 -->
+	<delete id="delJobById" parameterType="int">
+		delete from t_job where
+		j_id=#{id}
+	</delete>
+	<!-- 根据职位id判断是否存在在职员工信息 -->
+	<select id="isExistEmployeeForJob" parameterType="int"
+		resultType="Employee">
+		select e.e_name ename
+		from t_job j,t_employee e
+		WHERE
+		j.j_id=e.ej_id and j.j_id=#{id}
+	</select>
+	<!-- 根据职位id得到对应的职位名称 -->
+	<select id="getJobMsg" parameterType="int" resultType="Job">
+		select
+		j_id jid,j_name jname
+		from t_job
+		where j_id=#{id}
+	</select>
+	<!-- 更新职位信息名称 -->
+	<update id="updateJobName" parameterType="String">
+		update t_job set
+		j_name=#{encodeJobname} where j_id=#{id}
+	</update>
+	<!-- 根据部门id得到部门名称和部门id -->
+	<select id="getDeptMsg4Depename" parameterType="int" resultType="Dept">
+		select d_id did,d_name dname
+		from t_dept
+		where d_id=#{id}
+	</select>
+	<!-- 更新部门名称信息 -->
+	<update id="updateDeptName" parameterType="String">
+		update t_dept set
+		d_name=#{encodeDeptname} where d_id=#{id}
+	</update>
+	<!-- 统计员工信息总记录数 -->
+	<select id="getTotalCountEmployeeMsg" resultType="int">
+		select count(1)
+		from t_employee
+	</select>
+	<!-- 得到每页显示的数据集合数 -->
+	<select id="getEmployeeMsgList" parameterType="int"
+		resultMap="getEmployeeMsgListMap">
+		select e.e_id,e.e_name,e.e_job,e.e_email,
+		e.e_sex,e.e_salary,e.e_tel,e_status,d.d_name
+		from t_employee e,t_dept d
+		WHERE e.ed_id=d.d_id LIMIT #{begin},#{pagesize}
+	</select>
+	<resultMap type="Employee" id="getEmployeeMsgListMap">
+		<id column="e_id" property="eid" />
+		<result column="e_name" property="ename" />
+		<result column="e_email" property="email" />
+		<result column="e_sex" property="esex" />
+		<result column="e_salary" property="esalary" />
+		<result column="e_tel" property="etel" />
+		<result column="e_status" property="estatus" />
+		<association property="ejob" javaType="Job">
+			<result column="e_job" property="jname" />
+		</association>
+		<association property="dept" javaType="Dept">
+			<result column="d_name" property="dname" />
+		</association>
+	</resultMap>
+	<!-- 得到员工基本信息 -->
+	<select id="getEmployeeMsgById" parameterType="int"
+		resultMap="getEmployeeMsgByIdMap">
+		select e.e_id,e.e_name,e.e_job,e.e_email,
+		e.e_sex,e.e_salary,e.e_tel,d.d_name,e.e_status,e.et_id
+		from t_employee
+		e,t_dept d WHERE e.ed_id=d.d_id and e.e_id=#{id}
+	</select>
+	<resultMap type="Employee" id="getEmployeeMsgByIdMap">
+		<id column="e_id" property="eid" />
+		<result column="e_name" property="ename" />
+		<result column="e_email" property="email" />
+		<result column="e_sex" property="esex" />
+		<result column="e_salary" property="esalary" />
+		<result column="e_tel" property="etel" />
+		<result column="e_status" property="estatus" />
+		<association property="ejob" javaType="Job">
+			<result column="e_job" property="jname" />
+		</association>
+		<association property="dept" javaType="Dept">
+			<result column="d_name" property="dname" />
+		</association>
+		<association property="train" javaType="Train">
+			<id column="et_id" property="tid" />
+		</association>
+	</resultMap>
+	<!-- 删除员工 -->
+	<delete id="delEmployeeMsgById" parameterType="int">
+		delete from
+		t_employee where e_id=#{eid}
+	</delete>
+	<!-- 更新换岗后的员工信息 -->
+	<update id="updateEmployeeMsg" parameterType="String">
+		update t_employee
+		set e_job=#{encodeJname},ed_id=#{did} where e_id=#{id}
+	</update>
+	<!-- 根据职位名得到职位id -->
+	<select id="getJobMsgByName" parameterType="String" resultType="Job">
+		select j_id jid from t_job where j_name=#{jobName}
+	</select>
+	<!-- 根据部门名得到部门id -->
+	<select id="getDeptMsgByName" parameterType="String" resultType="Dept">
+		select d_id did from t_dept where d_name=#{deptName}
+	</select>
+	<!-- 得到总培训记录数 -->
+	<select id="getTotalCountTrainMsg" resultType="int">
+		select count(1)
+		from t_train
+	</select>
+	<!-- 得到每页显示培训信息的数据集合 -->
+	<select id="getTrainMsgList" parameterType="int" resultMap="getTrainMsgListMap">
+		SELECT
+		e.e_id,e.e_name,t.t_id,t.t_time,t.t_content,t.t_address,t.eboss_id,t.eboss_name
+		from t_employee e,t_train t
+		where et_id=t_id limit #{begin},#{pagesize}
+	</select>
+	<resultMap type="Train" id="getTrainMsgListMap">
+		<id column="t_id" property="tid" />
+		<result column="t_time" property="ttime" />
+		<result column="t_content" property="tcontent" />
+		<result column="t_address" property="taddress" />
+		<association property="employee" javaType="Employee">
+			<id column="eboss_id" property="eid" />
+			<result column="eboss_name" property="ename" />
+		</association>
+		<collection property="list" ofType="Employee">
+			<id column="e_id" property="eid" />
+			<result column="e_name" property="ename" />
+		</collection>
+	</resultMap>
+	<!-- 得到所有的员工姓名 -->
+	<select id="getAllEmployeeMsg" resultType="Employee">
+		select e_id eid,e_name
+		ename from t_employee
+	</select>
+	<!-- 保存培训信息 -->
+	<insert id="saveTrainMsg" parameterType="Train">
+		insert into
+		t_train(t_time,t_content,t_address,e_id,e_name,eboss_id,eboss_name)
+		values(#{ttime},#{tcontent},#{address},#{eid},#{ename},#{ebossId},#{ebossName})
+	</insert>
+	<!-- 根据e_id得到培训表id -->
+	<select id="getTrainMsgByEid" parameterType="int" resultType="Train">
+		select t_id tid ,t_time ttime,t_content tcontent,t_address taddress
+		from t_train where e_id=#{eid}
+	</select>
+	<!-- 修改员工表中et_id外键=t_id -->
+	<update id="updateEmployeeMsgByTrain" parameterType="int">
+		update
+		t_employee set et_id=#{tid} where e_id=#{eid}
+	</update>
+	<!-- 判断是否能给员工添加培训操作 -->
+	<select id="isExistMsg" parameterType="int" resultType="Employee">
+		select
+		et_id "train.tid"
+		from t_employee where e_id=#{eid}
+	</select>
+	<!-- 管理员删除培训信息 -->
+	<delete id="delTrainMsgById" parameterType="int">
+		delete from t_train
+		where t_id=#{id}
+	</delete>
+	<!-- 查找培训信息用于回显数据 -->
+	<select id="getTrainMsg" parameterType="int" resultMap="getTrainMsgMap">
+		select
+		t_id,t_time,t_content,t_address,e_id,e_name from t_train
+		where
+		t_id=#{tid}
+	</select>
+	<resultMap type="Train" id="getTrainMsgMap">
+		<id column="t_id" property="tid" />
+		<result column="t_time" property="ttime" />
+		<result column="t_content" property="tcontent" />
+		<result column="t_address" property="taddress" />
+		<collection property="list" ofType="Employee">
+			<id column="e_id" property="eid" />
+			<result column="e_name" property="ename" />
+		</collection>
+	</resultMap>
+	<!-- 更新培训表里面的数据 -->
+	<update id="updateTrainMsg" parameterType="String">
+		update t_train set
+		t_time=#{ttime},t_content=#{encodeTcontent},t_address=#{encodeTaddress},e_id=#{eid},
+		e_name=#{ename} where t_id=#{id}
+	</update>
+	<!-- 统计奖惩表的总记录数 -->
+	<select id="getTotalCountRepeMsg" resultType="int">
+		select count(1)
+		from t_repe
+	</select>
+	<!-- 得到每页奖惩信息数据的集合 -->
+	<select id="getRepeMsgList" parameterType="int" resultType="Repe">
+		select rp_id rpid,re_sal resal,re_time retime,re_reason rereason,
+		pe_sal pesal,pe_time petime,pe_reason pereason,e_id "employee.eid",
+		e_name "employee.ename"
+		from t_repe limit #{begin},#{pagesize}
+	</select>
+	<!-- 保存奖励信息到奖惩表中 -->
+	<insert id="saveRepeMsg" parameterType="Repe">
+		insert into
+		t_repe(re_time,re_sal,re_reason,e_id,e_name)
+		values(#{retime},#{resal},#{rereason},#{employee.eid},#{employee.ename})
+	</insert>
+	<!-- 保存惩罚信息到奖惩表中 -->
+	<insert id="savePeReMsg" parameterType="Repe">
+		insert into
+		t_repe(pe_time,pe_sal,pe_reason,e_id,e_name)
+		values(#{petime},#{pesal},#{pereason},#{employee.eid},#{employee.ename})
+	</insert>
+	<!-- 根据id删除奖惩表相关的信息 -->
+	<delete id="delRepeMsg" parameterType="int">
+		delete from t_repe where
+		rp_id=#{id}
+	</delete>
+	<!-- 做修改回显时,根据id得到奖惩表的相关信息 -->
+	<select id="getAllRepeMsgById" parameterType="int" resultType="Repe">
+		select rp_id rpid,re_sal resal,pe_sal pesal,re_time retime,pe_time
+		petime,re_reason rereason,pe_reason pereason,
+		e_id
+		"employee.eid",e_name "employee.ename"
+		from t_repe
+		where rp_id=#{id}
+	</select>
+	<!-- 更新奖惩表的信息 -->
+	<update id="updateRepeMsg" parameterType="Repe">
+		update t_repe set
+		re_sal=#{resal},pe_sal=#{pesal},re_time=#{retime},pe_time=#{petime},
+		re_reason=#{rereason},pe_reason=#{pereason},e_id=#{employee.eid},e_name=#{employee.ename}
+		where rp_id=#{rpid}
+	</update>
+	<!-- 得到每页显示的员工考勤记录的数据集合 -->
+	<select id="getEmplAttenceMsgList" parameterType="int"
+		resultMap="getEmplAttenceMsgListMap">
+		select
+		e.e_id,e.e_name,e.e_job,e.e_salary,a.a_id,a.onworktime,a.offworktime,
+		a.a_year,a.a_month,a.a_day,a.comelatestatus,a.leftearlystatus,
+		a.a_monthofdays from t_employee e,t_attence a
+		where a.e_id=e.e_id <!-- limit 
+			#{begin},#{pagesize} -->
+	</select>
+	<resultMap type="Employee" id="getEmplAttenceMsgListMap">
+		<id column="e_id" property="eid" />
+		<result column="e_name" property="ename" />
+		<result column="e_salary" property="esalary" />
+		<association property="ejob" javaType="Job">
+			<result column="e_job" property="jname" />
+		</association>
+		<collection property="listAttence" ofType="Attence">
+			<id column="a_id" property="aid" />
+			<result column="onworktime" property="onworktime" />
+			<result column="offworktime" property="offworktime" />
+			<result column="a_year" property="year" />
+			<result column="a_month" property="month" />
+			<result column="a_day" property="day" />
+			<result column="comelatestatus" property="comelatestatus" />
+			<result column="leftearlystatus" property="leftearlystatus" />
+			<result column="a_monthofdays" property="monthodfdays" />
+		</collection>
+	</resultMap>
+	<!-- 统计考勤表里面的记录 -->
+	<select id="getTotalCountAttenceMsg" resultType="int">
+		select count(1)
+		from t_attence where a_year=#{year} and a_month=#{month} and
+		a_day=#{day}
+	</select>
+	<!-- 得到员工的每天的考勤信息 -->
+	<select id="getAttenceMsgList" parameterType="int" resultType="Attence">
+		SELECT a.e_id "employee.eid",a.e_name "employee.ename",a.onworktime
+		onworktime,a.offworktime offworktime,
+		a.comelatestatus
+		comelatestatus,a.leftearlystatus leftearlystatus
+		from t_attence a
+		WHERE
+		a.a_year=#{year} and a.a_month=#{month} and a.a_day=#{day} limit
+		#{begin},#{pagesize}
+	</select>
+	<!-- 根据部门名字得到部门信息 -->
+	<select id="getDeptMsgByname" parameterType="String" resultType="Dept">
+		select d_id did from t_dept where d_name=#{dname}
+	</select>
+	<!-- 根据部门id得到员工集合信息(主要是员工名字) -->
+	<select id="getListEmployeeMsgById" parameterType="int"
+		resultType="Employee">
+		select e_id eid,e_name ename from t_employee where
+		ed_id=#{"dept.did"}
+	</select>
+	<!-- 开除员工更改员工的状态为离职 -->
+	<update id="updateEmployeeStatusById" parameterType="int">
+		update
+		t_employee set e_status=#{emplStatus} where e_id=#{id}
+	</update>
+	<!-- 管理员查看员工考勤信息得到的信息放在员工扩展类中 -->
+	<select id="getAllEmployeeMsgCustom" resultMap="getEmployeeMsgMap">
+		select
+		e.e_id,e.e_name,e.e_job,
+		d.d_name,e.e_status,e.e_salary
+		from t_employee
+		e,t_dept d WHERE e.ed_id=d.d_id
+	</select>
+	<resultMap type="EmployeeCusttom" id="getEmployeeMsgMap">
+		<id column="e_id" property="eid" />
+		<result column="e_name" property="ename" />
+		<result column="e_status" property="estatus" />
+		<result column="e_salary" property="esalary" />
+		<association property="ejob" javaType="Job">
+			<result column="e_job" property="jname" />
+		</association>
+		<association property="dept" javaType="Dept">
+			<result column="d_name" property="dname" />
+		</association>
+	</resultMap>
+	<select id="getAttenceMsgByidAndDate" parameterType="int"
+		resultType="Attence">
+		select comelatestatus comelatestatus,leftearlystatus
+		leftearlystatus from
+		t_attence where e_id=#{eid}
+		and a_year=#{year} and
+		a_month=#{month}
+	</select>
+	<!-- 插入员工的年月薪资相关信息到薪资表中去 -->
+	<insert id="saveSalMsgYearAndMonth" parameterType="EmployeeCusttom">
+		insert into
+		t_salary(s_salary,s_jxsal,s_xbsal,s_resal,s_pesal,e_id,e_name,s_totalsal,s_year,s_month)
+		values(#{esalary},#{jxsal},#{sbsal},#{resal},#{pesal},#{eid},#{ename},#{totalSal},#{year},#{month})
+	</insert>
+	<!-- 一键结算工资操作时 把工资条记录信息插入到薪资表中判断是否已经插入了 -->
+	<select id="isExistSalMsgofEmplDate" parameterType="int"
+		resultType="Salary">
+		select s_id,s_salary,s_jxsal,s_resal,s_pesal from t_salary
+		where s_year=#{year} and s_month=#{month} and e_id=#{eid}
+	</select>
+	<!-- 得到工资异议总记录数 -->
+	<select id="getTotalCountSalReviewMsg" resultType="int">
+		select
+		count(1) from t_salreview
+	</select>
+	<!-- 得到每页显示的异议信息数据集合 -->
+	<select id="getSalReviewMsgList" parameterType="int"
+		resultMap="getSalReviewMsgListMap">
+		select
+		sr.sr_id,e.e_id,e.e_name,s.s_year,s.s_month,sr.sr_reason,sr.sr_status
+		from t_salary s,t_salreview sr,t_employee e
+		where srs_id=s.s_id and
+		sre_id=e.e_id LIMIT #{begin},#{pagesize}
+	</select>
+	<resultMap type="SalReview" id="getSalReviewMsgListMap">
+		<id column="sr_id" property="srid" />
+		<result column="sr_reason" property="srreason" />
+		<result column="sr_status" property="srstatus" />
+		<association property="salary" javaType="Salary">
+			<result column="s_year" property="year" />
+			<result column="s_month" property="month" />
+		</association>
+		<association property="employee" javaType="Employee">
+			<id column="e_id" property="eid" />
+			<result column="e_name" property="ename" />
+		</association>
+	</resultMap>
+	<!-- 根据异议id得到异议表中 薪资id -->
+	<select id="getSalReviewMsgById" parameterType="int" resultType="SalReview">
+		select sr_id srid,srs_id "salary.sid" from t_salreview where
+		sr_id=#{id}
+	</select>
+	<!-- 根据id得到对应的薪资信息 -->
+	<select id="getSalaryMsgBySid" parameterType="int" resultType="Salary">
+		select s_id sid,e_id "employee.eid",e_name "employee.ename",s_salary
+		ssalary,s_jxsal sjxsal,s_resal sresal,s_pesal spesal,s_xbsal
+		ssbsal,s_totalsal stotalsal,
+		s_year year,s_month month
+		from t_salary
+		where s_id=#{sid}
+	</select>
+	<!-- 更改薪资复议消息的状态 -->
+	<update id="updateSalReviewMsg" parameterType="int">
+		update t_salreview
+		set sr_status=#{srstatus} where sr_id=#{srid}
+	</update>
+	<!-- 验证管理员登录是否成功 -->
+	<select id="validateAdminMsg" parameterType="Admin" resultType="Admin">
+		select a_name aname,a_pwd apwd from t_admin where a_name=#{aname} and
+		a_pwd=#{apwd}
+	</select>
+</mapper>

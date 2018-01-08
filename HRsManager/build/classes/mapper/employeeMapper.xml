@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zch.manager.dao.EmployeeDao">
+	<!-- 员工登录根据输入的用户名密码 -->
+	<select id="validateEmplLogin" parameterType="Employee"
+		resultType="Employee">
+		select e_id eid,e_name ename,e_pwd epwd from t_employee where
+		e_name=#{ename} and e_pwd=#{epwd}
+	</select>
+	<!-- 得到部门总记录数 -->
+	<select id="getTotalCountDeptMsg" resultType="int">
+		select count(1) from t_dept
+	</select>
+	<!-- 得到每页显示的部门信息的集合 部门信息分页查询 -->
+	<select id="getDeptMsgList" parameterType="int" resultMap="getDeptMsgMap">
+		select d.d_id ,d.d_name ,d.d_createtime,j.j_id,j.j_name,e.e_name
+		from ((select *from t_dept limit #{begin},#{pagesize})d left join t_job j
+		on d.d_id=j.jd_id)
+		left join t_employee e on e.ej_id=j.j_id
+	</select>
+	<resultMap type="Dept" id="getDeptMsgMap">
+		<id column="d_id" property="did" />
+		<result column="d_name" property="dname" />
+		<result column="d_createtime" property="dcreatetime" />
+		<collection property="job" ofType="Job">
+			<id column="j_id" property="jid" />
+			<result column="j_name" property="jname" />
+			<collection property="employee" ofType="Employee">
+				<id column="e_id" property="eid" />
+				<result column="e_name" property="ename" />
+			</collection>
+		</collection>
+	</resultMap>
+	<!-- 根据职位id查找所有员工信息的名字 -->
+	<select id="findAllEmployeeMsgByJobId" resultType="Employee">
+		select e.e_name ename from t_job j,t_employee e where e.ej_id=j.j_id and
+		j.j_id=#{jobId}
+	</select>
+	<!-- 得到员工基本信息 -->
+	<select id="getEmployeeMsgById" parameterType="int"
+		resultMap="getEmployeeMsgByIdMap">
+		select e.e_id,e.e_name,e.e_pwd,e.e_job,e.e_email,
+		e.e_sex,e.e_salary,e.e_tel,d.d_name,e.e_status,e.et_id
+		from t_employee e,t_dept d WHERE e.ed_id=d.d_id and e.e_id=#{id}
+	</select>
+	<resultMap type="Employee" id="getEmployeeMsgByIdMap">
+		<id column="e_id" property="eid" />
+		<result column="e_name" property="ename" />
+		<result column="e_pwd" property="epwd" />
+		<result column="e_email" property="email" />
+		<result column="e_sex" property="esex" />
+		<result column="e_salary" property="esalary" />
+		<result column="e_tel" property="etel" />
+		<result column="e_status" property="estatus" />
+		<association property="ejob" javaType="Job">
+			<result column="e_job" property="jname" />
+		</association>
+		<association property="dept" javaType="Dept">
+			<result column="d_name" property="dname" />
+		</association>
+		<association property="train" javaType="Train">
+			<id column="et_id" property="tid" />
+		</association>
+	</resultMap>
+	<!-- 根据培训表主键得到培训相关信息内容 -->
+	<select id="getTrainMsg" parameterType="int" resultType="Train">
+		select t_id tid,t_time ttime,t_content tcontent,
+		t_address taddress, eboss_id "employee.eid",eboss_name "employee.ename" from
+		t_train where t_id=#{tid}
+	</select>
+	<!-- 员工名匹配员工id -->
+	<select id="getEmployeeMsgByName" parameterType="String"
+		resultType="Employee">
+		select e_id eid,e_name ename from t_employee where e_name=#{ename}
+	</select>
+	<!-- 根据员工id得到员工和培训表的外键et_id -->
+	<select id="getEmployeeEtidByid" parameterType="int" resultType="int">
+		select et_id "train.tid" from t_employee where e_id=#{eid}
+	</select>
+	<!-- 根据员工id统计其对应的奖惩记录信息 -->
+	<select id="getTotalCountRepeMsg" parameterType="int"
+		resultType="int">
+		select count(1) from t_repe where e_id=#{eid}
+	</select>
+	<select id="getRepeMsgList" parameterType="int" resultType="Repe">
+		select rp_id rpid,re_sal resal,re_time retime,re_reason rereason,
+		pe_sal pesal,pe_time petime,pe_reason pereason,e_id "employee.eid",
+		e_name "employee.ename"
+		from t_repe where e_id=#{eid} limit #{begin},#{pagesize}
+	</select>
+	<!-- 插入员工考勤记录信息(主要是上班打卡的一些信息) -->
+	<insert id="saveAttenceMsg" parameterType="Attence">
+		insert into
+		t_attence(onworktime,comelatestatus,a_year,a_month,a_day,a_monthofdays,e_id,e_name)
+		values(#{onworktime},#{comelatestatus},#{year},#{month},#{day},#{monthodfdays},#{employee.eid},#{employee.ename})
+	</insert>
+	<!-- 更新用户的考勤表内容(打了下班卡的时间) -->
+	<update id="updateAttenceMsg" parameterType="Attence">
+		update t_attence set
+		offworktime=#{offworktime},leftearlystatus=#{leftearlystatus} where
+		e_id=#{employee.eid}
+	</update>
+	<!-- 判断员工当天是否已经打过卡 -->
+	<select id="isExistAtttenceMsgByDay" parameterType="int"
+		resultType="Attence">
+		select a_id aid from t_attence where e_id=#{eid} and a_year=#{year} and
+		a_month=#{month} and a_day=#{day}
+	</select>
+	<!-- 员工旷工,迟到,早退自动生成相应的惩罚记录 -->
+	<insert id="saveRepeMsg">
+		insert into t_repe(pe_time,pe_sal,pe_reason,e_id,e_name)
+		values(#{repe.petime},#{repe.pesal},#{repe.pereason},#{eid},#{ename})
+	</insert>
+	<!-- 得到该员工对应月份的薪资信息 -->
+	<select id="getSalMsgDate" parameterType="int" resultType="Salary">
+		select e_id "employee.eid",e_name "employee.ename",s_id sid,s_salary
+		ssalary,s_jxsal sjxsal,
+		s_resal sresal,s_pesal spesal,s_xbsal ssbsal,s_totalsal stotalsal,
+		s_year year,s_month month
+		from t_salary where e_id=#{eid} and s_year=#{year} and s_month=#{month}
+	</select>
+	<!-- 根据sid薪资表id(主键)得到薪资表信息 -->
+	<select id="getSalMsgById" parameterType="int" resultType="Salary">
+		select s_id sid,s_salary ssalary,s_jxsal sjxsal,s_resal sresal,s_pesal
+		spesal,s_xbsal ssbsal,e_id "employee.eid",e_name "employee.ename",
+		s_totalsal stotalsal,s_year year,s_month month
+		from t_salary
+		where s_id=#{sid}
+	</select>
+	<!-- 保存工资异议信息到数据表中去 -->
+	<insert id="saveSalReview" parameterType="SalReview">
+		insert into t_salreview(srs_id,sr_reason,sre_id,sr_status)
+		values(#{salary.sid},#{srreason},#{employee.eid},#{srstatus});
+	</insert>
+	<!-- 员工修改个人信息 -->
+	<update id="updateEmployeeMsg" parameterType="Employee">
+		update t_employee set e_pwd=#{epwd},e_tel=#{etel} where e_id=#{eid}
+	</update>
+</mapper>

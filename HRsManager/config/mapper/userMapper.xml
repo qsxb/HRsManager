@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zch.manager.dao.UserDao">
+	<!-- 注册user信息 -->
+	<insert id="addUser" parameterType="User">
+		insert into t_user(u_name,u_pwd,u_email,u_state)
+		values(#{uname},#{upwd},#{uemail},#{ustate})
+	</insert>
+	<!-- 查找注册信息是否存在 -->
+	<select id="findUser" parameterType="User" resultType="User">
+		select u_name
+		from
+		t_user
+		where u_name=#{uname}
+	</select>
+	<!-- 验证用户登录 -->
+	<select id="validateLogin" parameterType="User" resultType="User">
+		select u_id uid,u_name uname,u_pwd upwd
+		from t_user
+		where u_name=#{uname} and u_pwd=#{upwd}
+	</select>
+	<!-- 用户填写的简历操作(保存简历表的操作) -->
+	<insert id="saveResume" parameterType="Resume">
+		insert into
+		t_resume(r_name,r_age,r_sex,r_education,r_tel,r_email,r_polstatus,ru_id,r_readstatus,r_facestatus,r_ideptname,r_ijobname,r_salary)
+		values(#{rname},#{rage},#{rsex},#{reducation},#{rtel},#{remail},#{rpolstatus},#{user.uid},#{rreadStatus},#{rfaceStatus},#{deptName},#{jobName},#{rsalary})
+	</insert>
+	<!-- 用户查询个人信息 -->
+	<select id="getUserMsg" parameterType="String" resultType="User">
+		select u_id uid,u_name uname,u_pwd upwd,u_email uemail
+		from t_user
+		where u_name=#{uname}
+	</select>
+	<!-- 当前用户的简历信息 -->
+	<select id="getResumeMsg" parameterType="String" resultType="Resume">
+		select r_id rid,r_name rname,r_age rage,r_sex rsex,r_education
+		reducation,
+		r_tel rtel,r_email remail,r_polstatus rpolstatus
+		from t_resume
+		where r_name=#{uname}
+	</select>
+	<!-- 激活用户状态得到的user对象来重新设置状态 -->
+	<select id="getUserObjByUname" parameterType="String"
+		resultType="User">
+		select u_id uid,u_name uname,u_pwd upwd,u_email uemail
+		from t_user
+		where u_name=#{uname}
+	</select>
+	<!-- 更新user中status属性判断激活成功状态 -->
+	<update id="updateUserMsg" parameterType="User">
+		update t_user set u_state = #{ustate} where u_id =#{uid}
+	</update>
+	<!-- 通过验证成登录功的用户名找打对应的id,并封装成一个user返回 -->
+	<select id="getHasIdMsg" parameterType="User" resultType="User">
+		select u_id uid,u_name uname,u_email uemail,u_state ustate
+		from t_user
+		where u_name=#{uname}
+	</select>
+	<!-- 用户修改简历是回显数据信息 -->
+	<select id="getUserResumeById" resultType="Resume">
+		select r_id rid,r_name rname,r_age rage, r_sex rsex,
+		r_education reducation,r_tel rtel,r_email remail,r_polstatus rpolstatus
+		from t_resume
+		where r_id=#{id}
+	</select>
+	<!-- 修改简历信息 -->
+	<update id="updateResumeMsg" parameterType="Resume">
+		update t_resume set r_age=#{rage},r_sex=#{rsex},r_education=#{reducation},
+		r_tel=#{rtel},r_email=#{remail},r_polstatus=#{rpolstatus}
+		where r_id=#{rid}
+	</update>
+	<!-- 修改简历信息1111 -->
+	<update id="updateUserResumeMsg" parameterType="int">
+		update t_resume set ra_id=#{aid} where r_id=#{rid}
+	</update>
+	<!-- 根据用户id得到简历信息 -->
+	<select id="getResumeMsg2" parameterType="int" resultType="Resume">
+		select r_id rid,r_name rname,r_age rage, r_sex rsex,
+		r_education reducation,r_tel rtel,r_email remail,r_polstatus rpolstatus,
+		r_readstatus rreadStatus,r_facestatus rfaceStatus,r_ideptname
+		deptName,
+		r_ijobname jobName
+		from t_resume
+		where ru_id =#{id}
+	</select>
+	<update id="updateUserResumeMsg2">
+		update t_resume set r_readstatus=#{rreadStatus} where r_id=#{rid}
+	</update>
+	<select id="getResumeMsgByRid" resultType="Resume">
+		select r_email remail,r_name rname,ru_id "user.uid",r_id rid,r_education
+		reducation
+		from t_resume
+		where r_id=#{id}
+	</select>
+	<!-- 修改用户录取状态 -->
+	<update id="updateUserMsgByUid" parameterType="int">
+		update t_user set u_admint=#{admint} where u_id=#{uid}
+	</update>
+</mapper>

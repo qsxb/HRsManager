@@ -1,0 +1,7 @@
+body{background-image:url(../images/Index.jpg);}
+table{margin: 0 auto;padding-top: 100px;}
+	table tr td{width: 100px;height: 50px;}
+	
+	#submit_id{text-align: center;margin:0 auto;}
+	#loginToRegist_id{cursor: pointer;}
+	
